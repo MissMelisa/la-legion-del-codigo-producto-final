@@ -1,15 +1,34 @@
+"""
+Limpieza y filtrado de los CSV crudos de Precios Claros (SEPA).
+
+Lee dataset/*.csv (productos, sucursales y precios_*.csv semanales) y
+genera en dataset/procesado/ los tres CSV que usa generar_sql.py:
+
+    sucursales_cordoba.csv  sucursales de Córdoba (AR-X)
+    precios_cordoba.csv     un precio por producto+sucursal
+    productos_cordoba.csv   productos con precio en Córdoba,
+                            con las categorías completadas
+
+Uso:
+    python preparacion/limpieza.py
+"""
 
 import re
+import sys
+import unicodedata
 
 import pandas as pd
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from categorizador import clasificar
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATASET_DIR = BASE_DIR / "dataset"
-OUTPUT_DIR = DATASET_DIR / "outputs"
+OUTPUT_DIR = DATASET_DIR / "procesado"
 
-# Crear carpeta outputs si no existe
+# Crear carpeta procesado si no existe
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -46,13 +65,58 @@ def normalizar_texto(serie):
     )
 
 
+# El dataset escribe la misma localidad de varias formas
+# ("CORDOBA", "Capital", "Córdoba", "CIUDAD DE CORDOBA NORTE"...).
+# Se compara sin tildes ni mayúsculas y se unifica con un nombre
+# canónico. Los barrios de la capital se agrupan en "Córdoba".
+LOCALIDADES_EQUIVALENTES = {
+    "cordoba": "Córdoba",
+    "capital": "Córdoba",
+    "ciudad de cordoba norte": "Córdoba",
+    "barrio aeronautico": "Córdoba",
+    "barrio matienzo": "Córdoba",
+    "quintas de arguello": "Córdoba",
+    "jardin espinoza": "Córdoba",
+    "carlos paz": "Villa Carlos Paz",
+    "marcos juares": "Marcos Juárez",
+    "marcos juarez": "Marcos Juárez",
+    "sta.rosa calamuchita": "Santa Rosa de Calamuchita",
+    "santa rosa de calamuchita": "Santa Rosa de Calamuchita",
+    "san francisco dpto s just": "San Francisco",
+    "villa allende lomas": "Villa Allende",
+    "rio cuarto": "Río Cuarto",
+    "rio tercero": "Río Tercero",
+    "rio segundo": "Río Segundo",
+    "rio ceballos": "Río Ceballos",
+    "jesus maria": "Jesús María",
+    "dean funes": "Deán Funes",
+    "cosquin": "Cosquín",
+    "villa maria": "Villa María",
+    "villa del rosario": "Villa del Rosario",
+}
+
+
+def _sin_tildes(texto):
+    texto = unicodedata.normalize("NFKD", texto)
+    return "".join(c for c in texto if not unicodedata.combining(c))
+
+
+def normalizar_localidad(valor):
+    clave = _sin_tildes(str(valor)).lower().replace("*", "")
+    clave = re.sub(r"\s+", " ", clave).strip()
+    if clave in LOCALIDADES_EQUIVALENTES:
+        return LOCALIDADES_EQUIVALENTES[clave]
+    palabras = clave.title().split(" ")
+    return " ".join(
+        [palabras[0]] + [p.lower() if p in ("De", "Del", "La", "Las") else p for p in palabras[1:]]
+    )
+
+
 # ==================================================
 # 0. DIAGNÓSTICO DE PRODUCTOS (solo lectura)
 # ==================================================
-# productos.csv no se filtra ni se reescribe acá (eso lo hace
-# load-to-mysql.py al momento de cargarlo, completando categorías
-# faltantes con el clasificador). Este bloque solo deja evidencia
-# real de su calidad de datos.
+# Este bloque solo deja evidencia de la calidad de productos.csv;
+# el filtrado y la categorización se hacen en el paso 4.
 
 archivo_productos = DATASET_DIR / "productos.csv"
 
@@ -138,6 +202,25 @@ for columna in columnas_texto_sucursales:
         df_sucursales_cordoba[columna] = normalizar_texto(
             df_sucursales_cordoba[columna]
         )
+
+localidades_antes = df_sucursales_cordoba["localidad"].nunique()
+df_sucursales_cordoba["localidad"] = df_sucursales_cordoba["localidad"].map(
+    normalizar_localidad
+)
+print(
+    f"\nLocalidades distintas: {localidades_antes} escritas en el "
+    f"dataset -> {df_sucursales_cordoba['localidad'].nunique()} normalizadas"
+)
+
+# Nombres de columna en snake_case, iguales a la tabla `sucursales`
+df_sucursales_cordoba = df_sucursales_cordoba.rename(columns={
+    "comercioid": "comercio_id",
+    "banderaid": "bandera_id",
+    "banderadescripcion": "bandera_descripcion",
+    "comerciorazonsocial": "comercio_razon_social",
+    "sucursalnombre": "sucursal_nombre",
+    "sucursaltipo": "sucursal_tipo",
+})
 
 # Guardar sucursales de Córdoba
 archivo_salida_sucursales = (
@@ -332,6 +415,51 @@ print(
 
 
 # ==================================================
+# 4. PRODUCTOS CON PRECIO EN CÓRDOBA + CATEGORÍAS
+# ==================================================
+# Solo se conservan los productos que tienen al menos un precio en
+# Córdoba (el resto no interviene en ningún análisis). Casi ningún
+# producto trae categoria_1/2/3 en el dataset original, así que se
+# completan con el clasificador por palabras clave (categorizador.py).
+
+df_productos = df_productos_diag[
+    df_productos_diag["id"].isin(set(df_precios_cordoba["producto_id"]))
+].copy()
+
+for columna in ("marca", "nombre", "presentacion"):
+    df_productos[columna] = normalizar_texto(df_productos[columna].fillna(""))
+
+sin_categoria = (
+    (df_productos["categoria_1"] == "")
+    & (df_productos["categoria_2"] == "")
+    & (df_productos["categoria_3"] == "")
+)
+inferidas = 0
+for idx in df_productos.index[sin_categoria]:
+    cat1, cat2, cat3 = clasificar(
+        df_productos.at[idx, "nombre"], df_productos.at[idx, "marca"]
+    )
+    if cat1 is not None:
+        df_productos.at[idx, "categoria_1"] = cat1
+        df_productos.at[idx, "categoria_2"] = cat2
+        df_productos.at[idx, "categoria_3"] = cat3
+        inferidas += 1
+
+print(
+    f"\nProductos con precio en Córdoba: {len(df_productos)} | "
+    f"categorías inferidas por palabras clave: {inferidas} de "
+    f"{sin_categoria.sum()} sin categoría"
+)
+
+archivo_salida_productos = OUTPUT_DIR / "productos_cordoba.csv"
+
+df_productos[[
+    "id", "marca", "nombre", "presentacion",
+    "categoria_1", "categoria_2", "categoria_3",
+]].to_csv(archivo_salida_productos, index=False, encoding="utf-8")
+
+
+# ==================================================
 # FINAL
 # ==================================================
 
@@ -348,3 +476,5 @@ print(
     f"Precios: "
     f"{archivo_salida_precios}"
 )
+
+print(f"Productos: {archivo_salida_productos}")
