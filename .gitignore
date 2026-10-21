@@ -1,9 +1,8 @@
-.venv
+.venv/
 .env
 __pycache__/
-# original dataset
-dataset/*.csv
+.DS_Store
 
-# keep outputs
-!dataset/outputs/
-!dataset/outputs/*.csv
+# CSV originales de SEPA (pesados; ver README para descargarlos).
+# Los CSV limpios de dataset/procesado/ sí se versionan.
+dataset/*.csv

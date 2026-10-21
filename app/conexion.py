@@ -1,18 +1,31 @@
 """
 Conexion a la base de datos MySQL usando PyMySQL.
 
+Los datos de conexión se leen del archivo .env en la raíz del
+proyecto (ver .env.ejemplo).
 """
 
 import os
+from pathlib import Path
+from urllib.parse import quote_plus
 
 import pymysql
 import pymysql.cursors
+from dotenv import load_dotenv
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+
+def crear_engine():
+    """Engine de SQLAlchemy con la misma configuración que ConexionBD,
+    para leer consultas directo a un DataFrame (pd.read_sql)."""
+    from sqlalchemy import create_engine
+
+    bd = ConexionBD()
+    return create_engine(
+        f"mysql+pymysql://{bd.user}:{quote_plus(bd.password)}"
+        f"@{bd.host}:{bd.port}/{bd.database}?charset=utf8mb4"
+    )
 
 
 class ConexionBD:

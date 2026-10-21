@@ -2,19 +2,16 @@
 Menú de consola: CRUD de productos, búsquedas y vista de precios,
 todo conectado a la base de datos (datos_comercios).
 
-How to use it:
-    python scripts/menu.py
+Uso (desde la raíz del proyecto):
+    python main.py
 """
 
 import re
 import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "producto"))
-
-from conexion import ConexionBD
-from producto import Producto
-from productoCRUD import ProductoCRUD
+from app.conexion import ConexionBD
+from app.modelos.producto import Producto
+from app.producto_crud import ProductoCRUD
 
 # Códigos de producto del dataset: o bien un código de barras (EAN/UPC,
 # 8 a 14 dígitos), o bien un código interno "comercio-bandera-numero"
@@ -303,8 +300,8 @@ def ver_vista_precios(repo):
         if producto_id:
             print("Ese producto no tiene precios cargados.")
         else:
-            print("No hay datos para mostrar (¿se creó la vista con "
-                  "sql/06_vista_precios_detalle.sql?).")
+            print("No hay datos para mostrar (¿se ejecutó "
+                  "sql/datos_comercios.sql?).")
         return
 
     for fila in filas:
@@ -323,6 +320,17 @@ def ver_vista_precios(repo):
 
 
 # ==================================================
+# Análisis
+# ==================================================
+
+def ejecutar_analisis(repo):
+    # Import diferido: pandas/matplotlib solo se cargan si se usa
+    from app import analisis
+
+    analisis.main()
+
+
+# ==================================================
 # MENÚ PRINCIPAL
 # ==================================================
 
@@ -336,6 +344,7 @@ MENU = """
 4. Buscar productos por nombre
 5. Buscar productos por categoría
 6. Ver vista de precios por producto/sucursal
+7. Ejecutar el análisis de precios (genera resultados/)
 0. Salir
 """
 
@@ -346,6 +355,7 @@ ACCIONES = {
     "4": buscar_por_nombre,
     "5": buscar_por_categoria,
     "6": ver_vista_precios,
+    "7": ejecutar_analisis,
 }
 
 

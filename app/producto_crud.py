@@ -1,7 +1,7 @@
-from conexion import ConexionBD
-from producto import Producto
-from sucursal import Sucursal
-from precio import Precio
+from app.conexion import ConexionBD
+from app.modelos.producto import Producto
+from app.modelos.sucursal import Sucursal
+from app.modelos.precio import Precio
 
 
 def _dividir_truncado(filas, limite):
