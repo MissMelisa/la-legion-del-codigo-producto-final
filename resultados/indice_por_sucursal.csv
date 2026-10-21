@@ -1,0 +1,41 @@
+sucursal_id,bandera_descripcion,sucursal_nombre,localidad,comercio,sucursales,productos_comparados,precios_comparados,indice_promedio,representativo
+15-1-1057,Supermercados DIA,1057 - Rio Tercero,Río Tercero,DIA Argentina S.A,1,33,33,0.6845571496347801,False
+15-1-1511,Supermercados DIA,1511 - Villa Del Rosario,Villa del Rosario,DIA Argentina S.A,1,38,38,0.7099845269655095,False
+15-1-1510,Supermercados DIA,1510 - Almafuerte,Almafuerte,DIA Argentina S.A,1,56,56,0.8166619203692953,False
+15-1-1509,Supermercados DIA,1509 - San Francisco Dpto S Just,San Francisco,DIA Argentina S.A,1,79,79,0.8611783191629582,False
+7-2-802,Abastecimiento Mercamax,Mercamax 802,Villa del Rosario,Cyre S.A.,1,1009,1009,0.8872930193538184,True
+8-1-8,Mariano Max,Sucursal 8,Valle Hermoso,Mariano S.A.,1,468,468,0.9001328089403037,True
+14-1-9,Supermercados Becerra,Sucursal 09 (cpaz),Villa Carlos Paz,Miguel Becerra S.A.,1,1612,1612,0.9002840708485778,True
+14-1-8,Supermercados Becerra,Sucursal 08 (sros),Santa Rosa de Calamuchita,Miguel Becerra S.A.,1,1817,1817,0.9008467350086327,True
+14-1-11,Supermercados Becerra,Sucursal 11 (vgb),Villa General Belgrano,Miguel Becerra S.A.,1,1724,1724,0.9026992758614777,True
+14-1-3,Supermercados Becerra,Sucursal 03,Alta Gracia,Miguel Becerra S.A.,1,1431,1431,0.9066621801773868,True
+1-1-7,Super MAMI,Super Mami 4,Salsipuedes,Dinosaurio S.A.,1,1736,1736,0.9137125331855354,True
+10-2-295,Market,Córdoba Granaderos,Alto Verde,INC S.A.,1,1043,1043,0.9364941591515145,True
+10-1-9,Hipermercado Carrefour,Córdoba Colon,Villa Urquiza,INC S.A.,1,1870,1870,0.9456931288690018,True
+10-1-54,Hipermercado Carrefour,Córdoba Villa Allende,Villa Allende,INC S.A.,1,1919,1919,0.9543612707479706,True
+17-1-70,Atomo,Sampacho,Sampacho,Millan S.A.,1,555,555,0.9752025504237031,True
+16-1-602,Hipermercado Libertad,Hipermercado Ruta 9,Córdoba,Libertad S.A,1,1258,1258,0.997249752121153,True
+2-1-351,La Anonima,ARROYITO,Arroyito,S.A. Importadora y Exportadora de la Patagonia,1,259,259,0.9993326222798457,True
+9-1-478,Vea,Bellville.,Bell Ville,Jumbo Retail Argentina S.A.,1,1065,1065,1.011311461748804,True
+7-1-53,Supermercados Cordiez,Cordiez 53,Río Segundo,Cyre S.A.,1,97,97,1.011347904911066,False
+9-1-232,Vea,Villa María II.,Villa María,Jumbo Retail Argentina S.A.,1,1225,1225,1.0146925451916575,True
+11-2-1097,Changomas,Cordoba Donato Alvarez,Córdoba,Wal Mart Argentina S.R.L.,1,1156,1156,1.014703172714348,True
+9-1-690,Vea,Rio Tercero II.,Río Tercero,Jumbo Retail Argentina S.A.,1,1148,1148,1.0215031526082428,True
+11-2-1056,Changomas,Villa Nueva,Villa Nueva,Wal Mart Argentina S.R.L.,1,1558,1558,1.0220568274994666,True
+16-1-2802,Hipermercado Libertad,Hipermercado Villa María,Villa María,Libertad S.A,1,1151,1151,1.028525965119916,True
+2-1-264,La Anonima,MARCOS JUAREZ,Marcos Juárez,S.A. Importadora y Exportadora de la Patagonia,1,201,201,1.0306348902233917,True
+11-5-1002,Walmart SuperCenter,Rio IV,Río Cuarto,Wal Mart Argentina S.R.L.,1,1847,1847,1.033236810564942,True
+7-1-48,Supermercados Cordiez,Cordiez 48,Unquillo,Cyre S.A.,1,1558,1558,1.0346574316850776,True
+10-2-119,Market,Río Cuarto,Río Cuarto,INC S.A.,1,1940,1940,1.0348331414609835,True
+7-1-32,Supermercados Cordiez,Cordiez 32,Santa Rosa de Calamuchita,Cyre S.A.,1,1799,1799,1.0365449639268025,True
+2-1-119,La Anonima,LABOULAYE,Laboulaye,S.A. Importadora y Exportadora de la Patagonia,1,280,280,1.042351674277312,True
+7-1-14,Supermercados Cordiez,Cordiez 14,Villa Dolores,Cyre S.A.,1,968,968,1.0545490222705178,True
+9-2-725,Disco,Alta Gracia.,Alta Gracia,Jumbo Retail Argentina S.A.,1,1389,1389,1.0690382212691827,True
+9-2-233,Disco,Carlos Paz.,Villa Carlos Paz,Jumbo Retail Argentina S.A.,1,1558,1558,1.070638620726924,True
+10-3-648,Express,Belgrano 54,Córdoba,INC S.A.,1,1116,1116,1.0801673597719257,True
+10-3-644,Express,25 de Mayo 979,Córdoba,INC S.A.,1,1331,1331,1.0815341418026243,True
+16-2-5904,Mini Libertad,Mini Libertad Octavio Pinto,Córdoba,Libertad S.A,1,757,757,1.0856914832831561,True
+7-1-47,Supermercados Cordiez,Cordiez 47,Capilla del Monte,Cyre S.A.,1,1093,1093,1.0871456688048313,True
+16-2-6004,Mini Libertad,Mini Ambrosio Olmos,Córdoba,Libertad S.A,1,894,894,1.0894284820871376,True
+9-2-583,Disco,SM 583 - Villa Allende.,Villa Allende,Jumbo Retail Argentina S.A.,1,1616,1616,1.0982720325508348,True
+23-1-6269,Axion Energy,Villa Allende,Villa Allende,Pan American Energy LLC Argentina,1,12,12,1.4614070900482823,False
