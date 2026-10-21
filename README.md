@@ -1,147 +1,164 @@
-# La Legión del Código
+# La Legión del Código — Gestión y análisis de precios (Córdoba)
 
-Proyecto de análisis de precios y comercios de Córdoba desarrollado para la **Tecnicatura Superior en Ciencias de Datos e Inteligencia Artificial**.
+Proyecto Integrador ABP · Tecnicatura Superior en Ciencia de Datos e IA (ISPC)
+Programación I y Bases de Datos II.
 
-## Descripción
+Aplicación de consola en Python (POO + MySQL) para gestionar productos y
+consultar precios por sucursal, más un módulo de análisis con Pandas y
+NumPy que responde:
 
-El proyecto utiliza archivos CSV con información sobre productos, precios y sucursales comerciales de Córdoba.
+> **¿Qué diferencias de precio presenta un mismo producto entre sucursales
+> de Córdoba y cómo pueden utilizarse para orientar decisiones comerciales?**
 
-Los datos son procesados, limpiados y almacenados en una base de datos MySQL para realizar diferentes consultas y análisis mediante SQL.
+Datos: Precios Claros (SEPA), sucursales de Córdoba (AR-X), abril–mayo de
+2020. Es una muestra histórica: **no son precios vigentes**.
 
-## Tecnologías utilizadas
+Integrantes: Ríos, Paula Melisa · Tauil, Maximiliano · Parisi, Julián ·
+Saravia Weht, Guadalupe Regina.
 
-- Python
-- Pandas
-- MySQL
-- MySQL Workbench
-- SQL
-- CSV
+---
 
-## Estructura del proyecto
+## LÉAME: instalación y ejecución
+
+### Requisitos
+
+- Python 3.11 o superior
+- MySQL 8.0 o superior (servidor local o remoto) y el cliente `mysql`
+  o MySQL Workbench
+
+### 1. Descargar el proyecto e instalar dependencias
+
+```bash
+git clone <URL-del-repositorio>
+cd la-legion-del-codigo-producto-final
+
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 2. Configurar la conexión (sin credenciales en el repositorio)
+
+```bash
+cp .env.ejemplo .env               # Windows: copy .env.ejemplo .env
+```
+
+Editá `.env` y completá `MYSQL_PASSWORD` (y el resto si tu MySQL no usa
+los valores por defecto). El archivo `.env` está en `.gitignore`: **no se
+sube ni se entrega**.
+
+### 3. Crear y cargar la base de datos
+
+Un único script crea la base `datos_comercios`, las tablas, carga los
+99.681 precios y crea las vistas:
+
+```bash
+mysql -u root -p < sql/datos_comercios.sql
+```
+
+En MySQL Workbench: *File → Run SQL Script…* y elegir
+`sql/datos_comercios.sql`.
+
+Al terminar se muestra la verificación:
+
+| tabla | cantidad |
+|---|---|
+| productos | 22565 |
+| sucursales | 163 |
+| precios | 99681 |
+
+> El script empieza con `DROP DATABASE IF EXISTS datos_comercios`: se
+> puede volver a ejecutar cuantas veces haga falta y siempre deja la base
+> en el mismo estado inicial (borra los cambios hechos desde el menú).
+
+### 4. Abrir la aplicación
+
+```bash
+python main.py
+```
+
+| Opción | Qué hace |
+|---|---|
+| 1 | Alta de producto (valida el código y permite cargar un precio en una sucursal) |
+| 2 | Baja de producto (borra el producto y sus precios en una transacción) |
+| 3 | Modificación de producto |
+| 4 | Búsqueda por nombre |
+| 5 | Búsqueda por categoría |
+| 6 | Precios de un producto en cada sucursal (`vista_precios_detalle`) |
+| 7 | Ejecutar el análisis de precios |
+
+### 5. Ejecutar el análisis
+
+```bash
+python -m app.analisis                 # resultados + gráficos
+python -m app.analisis --sin-graficos
+```
+
+Lee los datos desde MySQL y guarda en `resultados/`:
+
+- `resumen.md`: **todas las cifras del informe y del póster** (única fuente de números)
+- `p1_…`, `p2_…`, `p3_…`, `indice_por_sucursal.csv`, `valores_extremos.csv`: tablas completas
+- `g1_…`, `g2_…`, `g3_…png`: gráficos
+
+---
+
+## Estructura
 
 ```text
 .
-├── dataset/
-│   ├── productos.csv
-│   ├── sucursales.csv
-│   ├── precios_20200412_20200413.csv
-│   ├── precios_20200419_20200419.csv
-│   ├── precios_20200426_20200426.csv
-│   ├── precios_20200502_20200503.csv
-│   ├── precios_20200518_20200518.csv
-│   └── outputs/
-│       ├── sucursales_cordoba.csv
-│       ├── precios_cordoba.csv
-│       ├── productos_limpios.csv
-│       └── productos_categorizados.csv
-├── scripts/
-│   ├── clean-up.py
-│   ├── update-columns.py
-│   ├── categorizador.py
-│   ├── populate-categories.py
-│   ├── load-to-mysql.py
-│   ├── conexion.py
-│   ├── menu.py
-│   ├── analisis-pandas-numpy.py
-│   └── producto/
-│       ├── producto.py
-│       ├── sucursal.py
-│       ├── precio.py
-│       └── productoCRUD.py
+├── main.py                     punto de entrada: abre el menú
+├── app/
+│   ├── conexion.py             ConexionBD (PyMySQL) + crear_engine (SQLAlchemy)
+│   ├── producto_crud.py        ProductoCRUD: único acceso a la base
+│   ├── menu.py                 menú de consola
+│   ├── analisis.py             análisis con Pandas y NumPy
+│   └── modelos/                entidades: Producto, Sucursal, Precio
 ├── sql/
-│   ├── 00_crear_base_datos.sql
-│   ├── 01_promedio_por_comercio.sql
-│   ├── 02_maximo_por_categoria.sql
-│   ├── 03_minimo_por_producto.sql
-│   ├── 04_suma_por_comercio.sql
-│   ├── 05_diferencia_por_producto.sql
-│   ├── 06_vista_precios_detalle.sql
-│   ├── fullscript.sql
-│   └── docs/
-│       └── diseño_base_datos.md
-├── .github/
-│   └── pull_request_template.md
-├── docker-compose.yml
-├── load-data.sh
+│   └── datos_comercios.sql     script único: base + tablas + datos + vistas
+├── preparacion/                (solo para regenerar los datos, ver abajo)
+│   ├── limpieza.py
+│   ├── categorizador.py
+│   └── generar_sql.py
+├── dataset/procesado/          CSV limpios (entrada de generar_sql.py)
+├── resultados/                 salida del análisis
+├── docs/
+│   ├── recorte.md              pregunta central, preguntas y componentes
+│   ├── anexo_correcciones.md   tabla de correcciones (anexo del informe)
+│   └── diseno_base_datos.md    modelo relacional, calidad de datos y clases
 ├── requirements.txt
-├── .env.example
-├── .gitignore
-└── README.md
+└── .env.ejemplo
 ```
 
-- `dataset/` — CSV originales del dataset SEPA y, en `outputs/`, los archivos generados por los scripts de limpieza y categorización.
-- `scripts/` — pipeline de datos (`clean-up.py`, `update-columns.py`, `categorizador.py`, `populate-categories.py`, `load-to-mysql.py`), la conexión a MySQL (`conexion.py`) y la aplicación interactiva (`menu.py` + `producto/` con las clases `Producto`, `Sucursal` y `Precio`, y el acceso a datos `ProductoCRUD`).
-- `sql/` — script de creación de la base (`00_crear_base_datos.sql`), las consultas de análisis numeradas, `fullscript.sql` con todo junto y la documentación del diseño en `docs/`.
-- `docker-compose.yml` — levanta un MySQL 8.4 local para desarrollo.
-- `load-data.sh` — corre el pipeline completo: limpieza y carga a MySQL.
+### Vistas SQL
 
-## Cargar los datos a MySQL
+| Vista | Uso |
+|---|---|
+| `vista_precios_detalle` | Une productos, sucursales y precios (menú y análisis) |
+| `vista_resumen_producto` | Mínimo, máximo, diferencia y variación % por producto (P2) |
+| `vista_precio_minimo_producto` | Precio mínimo de cada producto y comercio donde está (P1) |
+| `vista_indice_precio` | Precio relativo al promedio del mismo producto (productos en 10 o más sucursales) |
+| `vista_indice_comercio` / `vista_indice_sucursal` | Índice promedio por comercio y por sucursal (P3) |
 
-1. Copiá `.env.example` a `.env` y completá los datos de conexión a tu MySQL local.
-2. Instalá las dependencias: `pip install -r requirements.txt`
-3. Corré `python scripts/load-to-mysql.py`
+---
 
-El script crea la base de datos y las tablas (`sql/00_crear_base_datos.sql`), vacía las tablas existentes y carga `dataset/productos.csv` y los CSV de `dataset/outputs/` (`sucursales_cordoba.csv`, `precios_cordoba.csv`). Filas de precios que no tengan un producto o sucursal correspondiente se descartan y se informan por consola.
+## Regenerar los datos desde los CSV originales (opcional)
 
-`precios` tiene clave primaria compuesta `(producto_id, sucursal_id)`: un mismo producto vendido en la misma sucursal aparece en varios de los CSV semanales de `dataset/precios_*.csv`, así que `scripts/clean-up.py` deduplica quedándose con el precio del snapshot más reciente antes de generar `precios_cordoba.csv` (de 174.414 filas originales de Córdoba quedan 99.681 pares producto+sucursal únicos). También descarta filas con precio nulo, cero o negativo. `scripts/load-to-mysql.py` repite esta deduplicación como red de seguridad antes de insertar.
+No hace falta para instalar ni ejecutar: `sql/datos_comercios.sql` ya
+incluye los datos. Solo si se quiere reproducir la limpieza:
 
-`scripts/clean-up.py` además imprime un diagnóstico de calidad de datos (nulos, duplicados, tipos de datos, productos sin categoría, precios no numéricos) sobre `productos.csv`, `sucursales.csv` y los `precios_*.csv` crudos, antes de filtrar/limpiar.
-
-La mayoría de los productos del dataset original no traen `categoria_1/2/3` cargada. Antes de insertarlos, el loader completa las categorías faltantes con un clasificador por palabras clave (`scripts/categorizador.py`) que usa la taxonomía real de [SEPA / Precios Claros](https://www.preciosclaros.gob.ar/#!/productos-informados). Es un heurístico basado en el nombre y la marca del producto, no viene del dataset original, así que puede tener errores u omisiones — se puede seguir ajustando agregando palabras clave a `categorizador.py`.
-
-`scripts/populate-categories.py` corre el mismo clasificador de forma independiente y guarda el resultado (solo los productos que quedaron con alguna categoría) en `dataset/outputs/productos_limpios.csv`, con una columna extra `categoria_origen` (`original` / `inferida`) para poder distinguir qué categorías vienen del dataset y cuáles fueron inferidas.
-
-Con la base ya cargada, podés correr cualquiera de los scripts de `sql/` (por ejemplo `mysql -u root datos_comercios < sql/01_promedio_por_comercio.sql`).
-
-## Menú interactivo
-
-Con la base ya cargada, `scripts/menu.py` ofrece una aplicación de consola para gestionar productos sin escribir SQL a mano:
+1. Descargar de [Precios Claros / SEPA](https://datos.produccion.gob.ar/dataset/sepa-precios)
+   `productos.csv`, `sucursales.csv` y los `precios_*.csv` de abril–mayo de 2020,
+   y copiarlos a `dataset/` (no se versionan por su tamaño).
+2. Ejecutar:
 
 ```bash
-python scripts/menu.py
+python preparacion/limpieza.py      # genera dataset/procesado/*.csv
+python preparacion/generar_sql.py   # genera sql/datos_comercios.sql
 ```
 
-Opciones disponibles:
-
-1. Alta de producto (valida el formato del ID —código de barras o código interno— y que no exista; permite cargar opcionalmente un precio en una sucursal).
-2. Baja de producto (elimina el producto y sus precios asociados en una única transacción).
-3. Modificación de producto.
-4. Búsqueda de productos por nombre.
-5. Búsqueda de productos por categoría (busca en `categoria_1`, `categoria_2` y `categoria_3`).
-6. Vista de precios por producto y sucursal (usa `vista_precios_detalle`, ver `sql/06_vista_precios_detalle.sql`).
-
-Cuando una búsqueda devuelve más resultados de los que se muestran, el menú lo aclara explícitamente ("hay más; refiná la búsqueda") en vez de imprimir un "Total: 50" que se pueda confundir con el total real.
-
-## Análisis con Pandas y NumPy
-
-Con la base ya cargada, `scripts/analisis-pandas-numpy.py` carga los precios desde MySQL a un DataFrame de Pandas y responde las 5 preguntas de análisis de negocio:
-
-```bash
-python scripts/analisis-pandas-numpy.py            # imprime resultados y genera gráficos
-python scripts/analisis-pandas-numpy.py --sin-graficos
-```
-
-Incluye estadísticas descriptivas (`describe()`), filtros y agrupamientos (`groupby`), operaciones con NumPy (percentiles, atípicos por IQR, índice de precio relativo por producto) y guarda los gráficos en `dataset/outputs/graficos/`.
-
-## Modelo de clases (POO)
-
-`scripts/producto/` contiene las clases del modelo, separadas por responsabilidad:
-
-**Entidades** (representan una fila de una tabla, sin acceder a la base de datos):
-
-- `Producto` — tabla `productos`.
-- `Sucursal` — tabla `sucursales`.
-- `Precio` — tabla `precios` (la asociativa entre productos y sucursales).
-
-**Infraestructura y acceso a datos** (no son entidades del modelo relacional):
-
-- `ConexionBD` (`scripts/conexion.py`) — administra la conexión a MySQL y expone `ejecutar_consulta()`, `ejecutar_accion()` y `ejecutar_transaccion()` (esta última ejecuta varias acciones como una única transacción, con rollback automático si alguna falla).
-- `ProductoCRUD` (`scripts/producto/productoCRUD.py`) — es la única clase que accede a la base de datos: CRUD de productos, búsquedas, alta de precios y consulta de sucursales/vista de precios. Las entidades no se importan entre sí ni acceden a `ConexionBD` directamente, evitando la dependencia circular Producto ⇄ ProductoCRUD.
-
-La baja de un producto (`ProductoCRUD.eliminar`) borra sus precios y el producto en una sola transacción: si el segundo `DELETE` fallara, el primero se revierte, evitando dejar precios huérfanos eliminados sin haber borrado el producto.
-
-## Documentación
-
-El diseño y la estructura de la base de datos se encuentran documentados en:
-
-[Diseño de la base de datos](sql/docs/diseño_base_datos.md)
+`limpieza.py` imprime un diagnóstico de calidad (nulos, duplicados, tipos)
+y aplica: filtro de Córdoba (AR-X), IDs como texto, normalización de
+textos y localidades, descarte de precios inválidos, un precio por
+producto + sucursal (el del archivo semanal más reciente) y categorías
+inferidas por palabras clave. Detalle en
+[docs/diseno_base_datos.md](docs/diseno_base_datos.md).

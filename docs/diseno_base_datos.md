@@ -63,8 +63,6 @@ erDiagram
         varchar categoria_1
         varchar categoria_2
         varchar categoria_3
-        decimal diferencia_precios
-        decimal variacion_porcentual
     }
 
     SUCURSALES {
@@ -106,8 +104,6 @@ Contiene la información de los productos, obtenidos de `productos.csv`.
 | categoria_1 | VARCHAR(150) | |
 | categoria_2 | VARCHAR(150) | |
 | categoria_3 | VARCHAR(150) | |
-| diferencia_precios | DECIMAL(12,2) | campo calculado |
-| variacion_porcentual | DECIMAL(12,2) | campo calculado |
 
 ### Tabla `sucursales`
 
@@ -138,7 +134,7 @@ Es la tabla asociativa entre `productos` y `sucursales`.
 | producto_id | VARCHAR(50) NOT NULL | PK (compuesta), FK → productos(id) |
 | sucursal_id | VARCHAR(50) NOT NULL | PK (compuesta), FK → sucursales(id) |
 
-**Corrección aplicada:** en la Evidencia 1, `precios` no tenía clave primaria (solo claves foráneas e índices). Se agregó una **clave primaria compuesta `(producto_id, sucursal_id)`**, que refleja la regla de negocio real: la tabla guarda un único precio vigente por cada combinación de producto y sucursal (no un historial de precios en el tiempo). Ver `sql/00_crear_base_datos.sql` y `sql/fullscript.sql`.
+**Corrección aplicada:** en la Evidencia 1, `precios` no tenía clave primaria (solo claves foráneas e índices). Se agregó una **clave primaria compuesta `(producto_id, sucursal_id)`**, que refleja la regla de negocio real: la tabla guarda un único precio vigente por cada combinación de producto y sucursal (no un historial de precios en el tiempo). Ver `sql/datos_comercios.sql`.
 
 Esta clave primaria obligó, además, a deduplicar los datos antes de cargarlos (ver siguiente sección), porque el dataset original tiene varios archivos semanales de precios y un mismo par producto+sucursal podía repetirse entre ellos.
 
@@ -146,7 +142,7 @@ Esta clave primaria obligó, además, a deduplicar los datos antes de cargarlos 
 
 ## 5. Modelo de clases (POO)
 
-El modelo de clases de la aplicación (`scripts/producto/` y `scripts/conexion.py`) distingue dos tipos de responsabilidad:
+El modelo de clases de la aplicación (`app/modelos/`, `app/producto_crud.py` y `app/conexion.py`) distingue dos tipos de responsabilidad:
 
 **Entidades** — representan una fila de una tabla, sin lógica de acceso a datos:
 
@@ -167,7 +163,7 @@ Antes, `Producto` importaba a `ProductoCRUD` dentro de sus propios métodos (`ac
 
 ## 6. Calidad de datos y limpieza
 
-`scripts/clean-up.py` corre un diagnóstico de calidad sobre los CSV crudos (antes de filtrar) e imprime, para `productos.csv`, `sucursales.csv` y los `precios_*.csv` unidos: cantidad de filas y columnas, tipos de datos, valores nulos por columna y registros duplicados. Una corrida real (28/09/2026) informó, entre otros:
+`preparacion/limpieza.py` corre un diagnóstico de calidad sobre los CSV crudos (antes de filtrar) e imprime, para `productos.csv`, `sucursales.csv` y los `precios_*.csv` unidos: cantidad de filas y columnas, tipos de datos, valores nulos por columna y registros duplicados. Una corrida real (28/09/2026) informó, entre otros:
 
 ```text
 ---- Diagnóstico de calidad: productos.csv (crudo) ----
@@ -209,7 +205,9 @@ A partir de este diagnóstico, la limpieza aplicada es:
 - **Tipos de datos:** `producto_id` y `sucursal_id` se leen explícitamente como texto (no como número), para no perder los ceros a la izquierda de los códigos de barras.
 - **Deduplicación de precios:** un mismo producto en una misma sucursal puede aparecer en más de uno de los 5 archivos semanales de precios. Como la tabla `precios` guarda un único precio vigente (no un historial), se ordena por fecha del archivo y se conserva el precio del snapshot más reciente por cada par `(producto_id, sucursal_id)`.
 - **Precios inválidos:** se descartan filas con precio nulo, cero o negativo.
-- **Categorías:** los productos sin `categoria_1/2/3` se completan, al momento de la carga (`scripts/load-to-mysql.py`), con un clasificador heurístico por palabras clave (`scripts/categorizador.py`).
+- **Normalización de localidades:** las variantes de escritura de una misma localidad ("CORDOBA", "Capital", "Córdoba", "CIUDAD DE CORDOBA NORTE", barrios de la capital…) se unifican: de 66 formas de escribir se pasa a 42 localidades.
+- **Productos:** se conservan solo los que tienen al menos un precio en Córdoba (22.565 de 72.038).
+- **Categorías:** los productos sin `categoria_1/2/3` se completan con un clasificador heurístico por palabras clave (`preparacion/categorizador.py`).
 
 **Pendiente:** las diferencias de escritura más profundas en nombres de comercios/localidades (ej. mayúsculas, abreviaturas distintas para el mismo comercio) no se normalizan automáticamente; solo se resuelven los casos triviales de espacios. Es una limitación conocida, no una limpieza completa por similitud de texto (fuzzy matching).
 
@@ -217,4 +215,15 @@ A partir de este diagnóstico, la limpieza aplicada es:
 
 ## 7. Consultas de análisis
 
-Los campos calculados y las consultas de agregación (promedio, máximo, mínimo, suma, diferencia y variación porcentual de precios) están en `sql/01_promedio_por_comercio.sql` a `sql/05_diferencia_por_producto.sql`, y la vista `vista_precios_detalle` (que integra `productos`, `sucursales` y `precios`) en `sql/06_vista_precios_detalle.sql`. El script completo, con la creación de la base, las tablas y las verificaciones de integridad, está en `sql/fullscript.sql`.
+`sql/datos_comercios.sql` (generado por `preparacion/generar_sql.py`) crea la base, las tablas, carga los datos y crea las vistas:
+
+| Vista | Contenido |
+|---|---|
+| `vista_precios_detalle` | Integra `productos`, `sucursales` y `precios` |
+| `vista_resumen_producto` | Por producto: sucursales, mínimo, máximo, promedio, diferencia y variación porcentual |
+| `vista_precio_minimo_producto` | Precio mínimo de cada producto y comercio(s) donde se encuentra |
+| `vista_indice_precio` | Cada precio dividido por el promedio de su producto (productos en 10 o más sucursales) |
+| `vista_indice_comercio` | Índice promedio por comercio |
+| `vista_indice_sucursal` | Índice promedio por sucursal |
+
+En versiones anteriores, la diferencia y la variación porcentual se guardaban como columnas calculadas en `productos` (`ALTER TABLE … ADD COLUMN IF NOT EXISTS`, una sintaxis que MySQL no acepta). Ahora se calculan en `vista_resumen_producto`, así no quedan valores desactualizados al modificar precios desde el menú.
