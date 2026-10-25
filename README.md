@@ -121,10 +121,6 @@ Lee los datos desde MySQL y guarda en `resultados/`:
 │   └── generar_sql.py
 ├── dataset/procesado/          CSV limpios (entrada de generar_sql.py)
 ├── resultados/                 salida del análisis
-├── docs/
-│   ├── recorte.md              pregunta central, preguntas y componentes
-│   ├── anexo_correcciones.md   tabla de correcciones (anexo del informe)
-│   └── diseno_base_datos.md    modelo relacional, calidad de datos y clases
 ├── requirements.txt
 └── .env.ejemplo
 ```
